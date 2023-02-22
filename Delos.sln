@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delos.ServerManager", "Delos.ServerManager\Delos.ServerManager.csproj", "{49531765-4F8B-4F14-A808-D02F7C5F7F12}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delos.ScreenSystem", "Delos.ScreenSystem\Delos.ScreenSystem.csproj", "{8EBC0023-66FE-43B8-95CE-4478BFF041D6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{49531765-4F8B-4F14-A808-D02F7C5F7F12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49531765-4F8B-4F14-A808-D02F7C5F7F12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49531765-4F8B-4F14-A808-D02F7C5F7F12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49531765-4F8B-4F14-A808-D02F7C5F7F12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EBC0023-66FE-43B8-95CE-4478BFF041D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EBC0023-66FE-43B8-95CE-4478BFF041D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EBC0023-66FE-43B8-95CE-4478BFF041D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EBC0023-66FE-43B8-95CE-4478BFF041D6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
