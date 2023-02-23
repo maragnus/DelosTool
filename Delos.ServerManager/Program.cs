@@ -12,22 +12,15 @@ IServiceProvider BuildServices()
         .AddJsonFile("appsettings.json", optional: true)
         .Build();
 
-    configuration["Data:ConnectionString"] ??= "Filename=delos.db;Connection=shared";
+    var homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    configuration["Data:ConnectionString"] ??= $"Filename={Path.Combine(homePath, ".delos.db")};Connection=shared";
     
     var services = new ServiceCollection();
-    services.AddSingleton<IScreenManager, ScreenManager>();
+    services.RegisterScreens<Program>();
+
     services.AddSingleton<DataContext>();
     services.Configure<DataContextOptions>(configuration.GetSection(DataContextOptions.SectionName));
-    
     services.AddScoped<SecureShellManager>();
-    
-    services.AddScoped<DashboardScreen>();
-    services.AddScoped<SecureShellScreen>();
-    services.AddScoped<SecureShellAddScreen>();
-    services.AddScoped<SecureShellEditScreen>();
-    services.AddScoped<PrivateKeyScreen>();
-    services.AddScoped<PrivateKeyEditScreen>();
-    
 
     return services.BuildServiceProvider();
 }
