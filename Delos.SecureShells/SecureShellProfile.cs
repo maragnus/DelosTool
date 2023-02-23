@@ -1,10 +1,9 @@
 using System.Text.RegularExpressions;
-using LiteDB;
 
-namespace Delos.ServerManager.SecureShells;
+namespace Delos.SecureShells;
 
 public record SecureShellProfile(
-    ObjectId? Id,
+    string? Id,
     string Name,
     string? Host,
     string? UserName)
@@ -18,8 +17,8 @@ public record SecureShellProfile(
         => Uri.CheckHostName(value) != UriHostNameType.Unknown;
 }
 
-public record SecureShellProfileSecure(
-    ObjectId? Id,
+public record SecureShellSecureProfile(
+    string? Id,
     string Name,
     string? Host,
     string? UserName,
@@ -28,7 +27,7 @@ public record SecureShellProfileSecure(
     string[]? KeyPairNames,
     byte[]? Fingerprint) : SecureShellProfile(Id, Name, Host, UserName)
 {
-    public SecureShellProfileSecure() : this(null, "", null, null, null, null, null, null)
+    public SecureShellSecureProfile() : this(null, "", null, null, null, null, null, null)
     {
     }
 }

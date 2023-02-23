@@ -1,7 +1,7 @@
 ﻿using Delos.ScreenSystem;
+using Delos.SecureShells;
 using Delos.ServerManager.Data;
 using Delos.ServerManager.Screens;
-using Delos.ServerManager.SecureShells;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +20,8 @@ IServiceProvider BuildServices()
 
     services.AddSingleton<DataContext>();
     services.Configure<DataContextOptions>(configuration.GetSection(DataContextOptions.SectionName));
+    services.AddScoped<ISecureShellStore, SecureShellStore>();
+    services.AddScoped<IPrivateKeyStore, PrivateKeyStore>();
     services.AddScoped<SecureShellManager>();
 
     return services.BuildServiceProvider();

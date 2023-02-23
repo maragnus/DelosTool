@@ -29,6 +29,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Delos.ScreenSystem\Delos.ScreenSystem.csproj" />
+      <ProjectReference Include="..\Delos.SecureShells\Delos.SecureShells.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="SecureShells" />
     </ItemGroup>
 
 </Project>

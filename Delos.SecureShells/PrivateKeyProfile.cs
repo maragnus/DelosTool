@@ -1,24 +1,20 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using JetBrains.Annotations;
-using LiteDB;
 using Renci.SshNet;
 
-namespace Delos.ServerManager.SecureShells;
+namespace Delos.SecureShells;
 
 [PublicAPI]
-public record PrivateKeyProfile(ObjectId? Id, string Name, string? Type, string? PrivateKey)
+public record PrivateKeyProfile(string? Id, string Name, string? Type, string? PrivateKey)
 {
     public PrivateKeyProfile() : this(null, "", null, null)
     {
     }
 
-    public string ToRfcPublicKey2()
-    {
-        using var rsa = RSA.Create();
-        rsa.ImportFromPem(PrivateKey);
-        return Convert.ToBase64String(rsa.ExportRSAPublicKey());
-    }
+    public static bool IsNameValid(string name) =>
+        Regex.IsMatch(name, @"^[A-Za-z][\w\-_]+$");
     
     public string ToRfcPublicKey()
     {

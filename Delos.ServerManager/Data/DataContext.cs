@@ -1,4 +1,5 @@
-using Delos.ServerManager.SecureShells;
+using Delos.SecureShells;
+using JetBrains.Annotations;
 using LiteDB.Async;
 using Microsoft.Extensions.Options;
 
@@ -10,6 +11,7 @@ public class DataContextOptions
     public string ConnectionString { get; set; } = null!;
 }
 
+[PublicAPI]
 public class DataContext : IDisposable
 {
     private readonly LiteDatabaseAsync _database;
@@ -17,12 +19,12 @@ public class DataContext : IDisposable
     public DataContext(IOptions<DataContextOptions> options)
     {
         _database = new LiteDatabaseAsync(options.Value.ConnectionString);
-        SecureShellProfiles = _database.GetCollection<SecureShellProfileSecure>();
-        KeyPairs = _database.GetCollection<PrivateKeyProfile>();
+        SecureShellProfiles = _database.GetCollection<SecureShellSecureProfile>();
+        PrivateKeys = _database.GetCollection<PrivateKeyProfile>("KeyPairs");
     }
 
-    public ILiteCollectionAsync<SecureShellProfileSecure> SecureShellProfiles { get; }
-    public ILiteCollectionAsync<PrivateKeyProfile> KeyPairs { get; set; }
+    public ILiteCollectionAsync<SecureShellSecureProfile> SecureShellProfiles { get; }
+    public ILiteCollectionAsync<PrivateKeyProfile> PrivateKeys { get; }
 
     public void Dispose()
     {

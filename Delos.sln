@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delos.ServerManager", "Delo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delos.ScreenSystem", "Delos.ScreenSystem\Delos.ScreenSystem.csproj", "{8EBC0023-66FE-43B8-95CE-4478BFF041D6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delos.SecureShells", "Delos.SecureShells\Delos.SecureShells.csproj", "{55D9ED85-6699-4682-9503-88B4D865E172}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{8EBC0023-66FE-43B8-95CE-4478BFF041D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EBC0023-66FE-43B8-95CE-4478BFF041D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EBC0023-66FE-43B8-95CE-4478BFF041D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55D9ED85-6699-4682-9503-88B4D865E172}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55D9ED85-6699-4682-9503-88B4D865E172}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55D9ED85-6699-4682-9503-88B4D865E172}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55D9ED85-6699-4682-9503-88B4D865E172}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

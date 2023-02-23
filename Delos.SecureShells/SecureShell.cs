@@ -2,16 +2,16 @@ using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Renci.SshNet;
 
-namespace Delos.ServerManager.SecureShells;
+namespace Delos.SecureShells;
 
 [PublicAPI]
 public class SecureShell
 {
     public SecureShellProfile Profile => _profile with { };
     private readonly SecureShellManager _secureShellManager;
-    private readonly SecureShellProfileSecure _profile;
+    private readonly SecureShellSecureProfile _profile;
 
-    public SecureShell(SecureShellProfileSecure profile, SecureShellManager secureShellManager)
+    public SecureShell(SecureShellSecureProfile profile, SecureShellManager secureShellManager)
     {
         _profile = profile;
         _secureShellManager = secureShellManager;
@@ -27,10 +27,10 @@ public class SecureShell
 
         if (_profile.KeyPairNames?.Length > 0)
         {
-            var keys = await _secureShellManager.GetPrivateKeys(_profile.KeyPairNames);
+            var keys = await _secureShellManager.PrivateKeyStore.Get(_profile.KeyPairNames);
+            var privateKeys = keys.Select(x => x.ToPrivateKeyFile()).ToArray();
             methods.Add(
-                new PrivateKeyAuthenticationMethod(_profile.UserName,
-                    keys.Select(x => x.ToPrivateKeyFile()).ToArray()));
+                new PrivateKeyAuthenticationMethod(_profile.UserName,privateKeys));
         }
         
         var connectionInfo = new ConnectionInfo(_profile.Host, _profile.UserName, methods.ToArray());
@@ -42,7 +42,7 @@ public class SecureShell
 
     public async Task InstallKeyPair(params string[] keyPairNames)
     {
-        var keys = await _secureShellManager.GetPrivateKeys(keyPairNames);
+        var keys = await _secureShellManager.PrivateKeyStore.Get(keyPairNames);
         var client = await ConnectAsync();
         try
         {

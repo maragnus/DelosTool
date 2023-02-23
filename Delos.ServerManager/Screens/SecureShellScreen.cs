@@ -1,6 +1,6 @@
 using System.Text;
 using Delos.ScreenSystem;
-using Delos.ServerManager.SecureShells;
+using Delos.SecureShells;
 using JetBrains.Annotations;
 using Spectre.Console;
 
@@ -18,7 +18,7 @@ public class SecureShellScreenState
     public string[]? KeyNames { get; set; }
     public string? MachineInfo { get; set; }
 
-    public static SecureShellScreenState FromProfile(SecureShellProfileSecure profile) =>
+    public static SecureShellScreenState FromProfile(SecureShellSecureProfile profile) =>
         new()
         {
             IsNew = profile.Id == null,
@@ -31,7 +31,7 @@ public class SecureShellScreenState
             MachineInfo = profile.MachineInfo
         };
 
-    public SecureShellProfileSecure ToProfile() =>
+    public SecureShellSecureProfile ToProfile() =>
         new(null, Name, Host, UserName, Password, RootPassword, KeyNames, null)
         {
             MachineInfo = MachineInfo
@@ -58,6 +58,10 @@ public class SecureShellEditScreen : Screen<SecureShellScreenState>
     {
         while (true)
         {
+            var infoText = string.IsNullOrWhiteSpace(State.MachineInfo)
+                ? "<run test to populate>"
+                : State.MachineInfo;
+            
             AnsiConsole.Clear();
             var name = new Option($"Name: [blue]{State.Name}[/]");
             var host = new Option($"Host: [blue]{State.Host}[/]");
@@ -65,7 +69,7 @@ public class SecureShellEditScreen : Screen<SecureShellScreenState>
             var pass = new Option($"Password: [blue]{State.Password}[/]");
             var root = new Option($"Root Password: [blue]{State.RootPassword}[/]");
             var keys = new Option($"Private Keys: [blue]{string.Join(",", State.KeyNames ?? new[] { "<none>" })}[/]");
-            var info = new Option($"Info: [blue]{State.MachineInfo}[/]");
+            var info = new Option($"Info: [blue]{infoText}[/]");
             var test = new Option("[purple]Test[/]...");
             var save = State.IsNew ? new Option("[green]Add[/]...") : new Option("[green]Save[/]...");
             var delete = new Option("[red]Delete[/]...");
@@ -93,7 +97,7 @@ public class SecureShellEditScreen : Screen<SecureShellScreenState>
             {
                 if (AnsiConsole.Confirm("Are you sure you want to [red]delete[/] this profile?", false))
                 {
-                    await _sshManager.DeleteProfile(_originalName);
+                    await _sshManager.SecureShellStore.Delete(_originalName);
                     return;
                 }
             }
@@ -107,7 +111,7 @@ public class SecureShellEditScreen : Screen<SecureShellScreenState>
                             ? ValidationResult.Success()
                             : ValidationResult.Error("[red]Must be 2+ alphanumerics and start with alpha[/]")));
 
-                if (await _sshManager.GetSecureShellProfile(value) != null)
+                if (await _sshManager.SecureShellStore.Get(value) != null)
                 {
                     var replace =
                         AnsiConsole.Confirm("A profile with this names exists, would you like to replace it?");
@@ -154,43 +158,87 @@ public class SecureShellEditScreen : Screen<SecureShellScreenState>
 
             if (response == keys)
             {
-                var keyNames = (await _sshManager.GetPrivateKeys()).Select(x => x.Name).ToArray();
+                const string addItem = "[green]New...[/]";
+                var keyNames = (await _sshManager.PrivateKeyStore.Get()).Select(x => x.Name).ToArray();
                 var select = new MultiSelectionPrompt<string>()
                     .Title("Select the [blue]keys[/] to use with this connection:")
                     .NotRequired()
-                    .AddChoices(keyNames);
+                    .AddChoices(keyNames.Concat(new[] { addItem }));
                 
                 foreach (var keyName in State.KeyNames ?? Array.Empty<string>())
                     select.Select(keyName);
                 
-                State.KeyNames = AnsiConsole.Prompt(select).ToArray();
+                var selection = AnsiConsole.Prompt(select).ToHashSet();
+                if (selection.Contains(addItem))
+                {
+                    selection.Remove(addItem);
+                    
+                    while (true)
+                    {
+                        var newKeyName = AnsiConsole.Ask<string>("Name for this key:").Trim();
+                        if (!PrivateKeyProfile.IsNameValid(newKeyName))
+                        {
+                            AnsiConsole.MarkupLine("[red]Must be 2+ alphanumerics and start with alpha[/]");
+                            continue;
+                        }
+                        await _sshManager.PrivateKeyStore.StoreNew(newKeyName);
+                        selection.Add(newKeyName);
+                        break;
+                    }
+                    
+                }
+
+                State.KeyNames = selection.ToArray();
             }
         }
     }
 
     private async Task Test()
     {
-        var secureShell = new SecureShell(State.ToProfile(), _sshManager);
-        var ssh = await secureShell.ConnectAsync();
-        var response = await ssh.SendCommandAsync("uname -a");
-        if (response.ExitCode != 0)
+        async Task<string> RunCommand(SshClientAsync ssh, string command)
         {
-            AnsiConsole.MarkupLine("[red]{0}[/]", response.Error);
-            if (!AnsiConsole.Confirm("Continue?")) return;
+            AnsiConsole.MarkupLine("[white]Executing:[/] {0}", command);
+            var response = await ssh.SendCommandAsync(command);
+            if (!string.IsNullOrWhiteSpace(response.Result))
+                AnsiConsole.MarkupLine("{0}", response.Result.Trim());
+            if (!string.IsNullOrWhiteSpace(response.Error))
+                AnsiConsole.MarkupLine("[maroon]{0}[/]", response.Error.Trim());
+            AnsiConsole.MarkupLine("[white]Completed with exit code {0}[/]", response.ExitCode);
+
+            if (response.ExitCode != 0) throw new Exception($"Command failed: {command}");
+            
+            return response.Result;
         }
-        State.MachineInfo = response.Result;
         
-        // TODO -- check root via sudo whoami
-        AnsiConsole.WriteLine(response.Result);
+        try
+        {
+            // Construct it manually since it isn't saved yet
+            var secureShell = new SecureShell(State.ToProfile(), _sshManager);
+            await using var ssh = await secureShell.ConnectAsync();
+            
+            State.MachineInfo = await RunCommand(ssh, "uname -a");
+
+            // TODO -- check root via sudo whoami
+            
+            AnsiConsole.MarkupLine("Test has [green]completed[/]");
+        }
+        catch (Exception ex)
+        {
+            AnsiConsole.WriteException(ex);
+            AnsiConsole.MarkupLine("Test has [red]failed[/]");
+        }
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine("Press [blue]ENTER[/] to continue");
+        Console.ReadLine();
     }
 
     private async Task Store()
     {
         if (_originalName != State.Name)
-            await _sshManager.RenameSecureShellProfile(_originalName, State.Name);
+            await _sshManager.SecureShellStore.Rename(_originalName, State.Name);
 
         var profile = State.ToProfile();
-        await _sshManager.StoreSecureShellProfile(profile);
+        await _sshManager.SecureShellStore.Store(profile);
     }
 }
 
@@ -214,7 +262,7 @@ public class SecureShellAddScreen : Screen
                         ? ValidationResult.Success()
                         : ValidationResult.Error("[red]Must be 2+ alphanumerics and start with alpha[/]")));
 
-            var profile = await _sshManager.GetSecureShellProfile(name);
+            var profile = await _sshManager.SecureShellStore.Get(name);
             if (profile != null)
             {
                 var response =
@@ -248,12 +296,12 @@ public class SecureShellScreen : Screen
     {
         while (true)
         {
-            var profiles = await _sshManager.GetSecureShellProfilesSecure();
+            var profiles = await _sshManager.SecureShellStore.Get();
             RenderTable(profiles);
 
             var editOption = new Option("Edit...");
             var addOption = new Option("Add...");
-            var ppkOption = new Option("Private Keys...");
+            var ppkOption = new Option("Manage Private Keys...");
             var returnOption = new Option("[yellow]Return[/]");
             var options = profiles.Length > 0
                 ? new[] { editOption, addOption, ppkOption, returnOption }
@@ -277,7 +325,7 @@ public class SecureShellScreen : Screen
         }
     }
 
-    private async Task RenderEditOptionList(SecureShellProfileSecure[] profiles)
+    private async Task RenderEditOptionList(SecureShellSecureProfile[] profiles)
     {
         const string returnOption = "[yellow]Return[/]";
 
@@ -293,7 +341,7 @@ public class SecureShellScreen : Screen
         await ScreenManager.PushAsync<SecureShellEditScreen, SecureShellScreenState>(state);
     }
 
-    private static void RenderTable(IEnumerable<SecureShellProfileSecure> profiles)
+    private static void RenderTable(IEnumerable<SecureShellSecureProfile> profiles)
     {
         var table = new Table()
             .AddColumn("Name")

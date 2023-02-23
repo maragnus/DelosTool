@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using JetBrains.Annotations;
 using Renci.SshNet;
 
-namespace Delos.ServerManager.SecureShells;
+namespace Delos.SecureShells;
 
 [PublicAPI]
 public class SshClientAsync : IAsyncDisposable

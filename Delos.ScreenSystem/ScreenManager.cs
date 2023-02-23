@@ -8,9 +8,9 @@ public interface IScreenManager
 {
     Screen CurrentScreen { get; }
     
-    Task PushAsync<TScreen>() where TScreen : Screen;
+    Task PushAsync<[MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)] TScreen>() where TScreen : Screen;
 
-    Task<TScreenState> PushAsync<TScreen, TScreenState>(TScreenState state)
+    Task<TScreenState> PushAsync<[MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]TScreen, [MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]TScreenState>(TScreenState state)
         where TScreen : Screen where TScreenState : class;
 }
 
